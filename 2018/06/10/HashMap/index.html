@@ -32,7 +32,7 @@
 <meta property="og:image" content="https://www.hellozuofeng.cn/2018/06/10/HashMap/3.png">
 <meta property="og:image" content="https://www.hellozuofeng.cn/2018/06/10/HashMap/4.png">
 <meta property="article:published_time" content="2018-06-10T02:22:30.000Z">
-<meta property="article:modified_time" content="2021-02-25T17:29:39.616Z">
+<meta property="article:modified_time" content="2021-02-25T17:37:36.289Z">
 <meta property="article:author" content="老板是只叫JOE的猫">
 <meta property="article:tag" content="源码">
 <meta property="article:tag" content="数据结构">
@@ -297,6 +297,7 @@
 <li>HashMap在第一次加入元素的时候初始化数组且每次加入元素会根据<code>threshold</code>是否需要扩容；加入链表结构时会使用“尾插法”。</li>
 <li>HashMap允许存入<code>NULL</code>值的<code>key</code>，其对应的数组下标必为<code>0</code>。</li>
 <li>HashMap在<code>hash()</code>过程中让高位也参与到计算中，为的是防止在计算元素下标时哈希碰撞。</li>
+<li>HashMap不只是在达到阈值时发生扩容，也有可能在链表转红黑树时，因数组长度为达到<code>MIN_TREEIFY_CAPACITY = 64</code>而发生扩容。</li>
 <li>HashMap扩容后，原下标的元素会根据其<code>hash</code>值对应扩容量二进制中<code>1</code>位值来判断其下标，对应此位的<code>hash</code>值为<code>0</code>则下标不变，为<code>1</code>则下标<code>+扩容量</code>。</li>
 </ul>
 </li>
@@ -315,6 +316,7 @@
 <li>两者的节点类型不同。在<code>JDK1.8</code>中节点类型是<code>Node&lt;K,V&gt;</code>或<code>TreeNode&lt;K,V&gt;</code>，而在<code>JDK1.7</code>中为<code>Entry&lt;K,V&gt;</code>。</li>
 <li>两者的<code>hash()</code>算法不同，且<code>JDK1.7</code>中会发生<code>rehash</code>重新计算哈希值。</li>
 <li>两者在扩容<code>resize()</code>方法处理细节不同。<code>JDK1.8</code>中会先“插入”再扩容，而<code>JDK1.7</code>中则先扩容再<code>rehash</code>后插入。 </li>
+<li>两者发生扩容的时机也有不同，<code>JDK1.8</code>中不只是在超过阈值时发生扩容，也有可能转红黑树时因数组没达到<code>64</code>的长度而发生扩容。</li>
 <li>两者加入元素的方式不同，<code>JDK1.8</code>加入链表是“尾插法”，而<code>JDK1.7</code>则使用<code>头插法</code>。这直接导致<code>JDK1.7</code>在多线程情况下扩容时可能导致链表“成环”而死循环，<code>JDK1.8</code>修复了这点。</li>
 </ol>
 
