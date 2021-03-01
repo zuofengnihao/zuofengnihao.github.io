@@ -163,7 +163,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.hellozuofeng.cn/2018/06/15/aqs/">
+    <link itemprop="mainEntityOfPage" href="https://www.hellozuofeng.cn/2018/06/14/HashMap/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -177,7 +177,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2018/06/15/aqs/" class="post-title-link" itemprop="url">源码解读——AbstractQuenedSynchronizer</a>
+            <a href="/2018/06/14/HashMap/" class="post-title-link" itemprop="url">源码解读——HashMap</a>
         </h2>
 
         <div class="post-meta">
@@ -187,77 +187,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2018-06-15 18:31:10" itemprop="dateCreated datePublished" datetime="2018-06-15T18:31:10+08:00">2018-06-15</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">源码阅读</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>内容</p>
-<hr>
-<h2 id="初看"><a href="#初看" class="headerlink" title="初看"></a>初看</h2><p>内容</p>
-<hr>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.hellozuofeng.cn/2018/06/10/HashMap/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="老板是只叫JOE的猫">
-      <meta itemprop="description" content="不满足是向上的齿轮">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="TAKO">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2018/06/10/HashMap/" class="post-title-link" itemprop="url">源码解读——HashMap</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2018-06-10 10:22:30" itemprop="dateCreated datePublished" datetime="2018-06-10T10:22:30+08:00">2018-06-10</time>
+              <time title="创建时间：2018-06-14 21:08:36" itemprop="dateCreated datePublished" datetime="2018-06-14T21:08:36+08:00">2018-06-14</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -281,11 +211,85 @@
 
       
           <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>我们时常在面试时被问及HashMap相关问题，也时常拿JDK1.8之后的<code>HashMap</code>和<code>JDK1.8</code>之前的<code>HashMap</code>来做比较。今天我将通阅读基于<code>JDK1.8</code>的<code>HashMap</code>与<code>JDK1.7</code>的<code>HashMap</code>的源码来与大家做一个分享。  </p>
-<p>我会以我阅读源码的习惯，从构造函数开始，一步一步的来分析HashMap的属性与方法，或者说内部类。不会和其他文章博客一样，开篇就向大家抛出所有属性、方法或内部类。<strong>这也是我的博客相比其他博客不同之处，以一个正常阅读源码的顺序一步步刨析源码，等遇到某个属性，某个方法，某个常量时，我们再根据代码逻辑来分析这些个属性、常量、方法的用意。</strong>当然，最后阅读完成之后，会有一个总结，如果大家觉得看得太墨迹，可以直接跳<code>JDK1.8</code>中的<code>HashMap</code><a href="/2018/06/10/HashMap/#sum">总结</a>查看，或者JDK1.8与JDK1.7的<a href="/2018/06/10/HashMap/#sums">异同</a>查看对比。  </p>
+<p>我会以我阅读源码的习惯，从构造函数开始，一步一步的来分析HashMap的属性与方法，或者说内部类。不会和其他文章博客一样，开篇就向大家抛出所有属性、方法或内部类。<strong>这也是我的博客相比其他博客不同之处，以一个正常阅读源码的顺序一步步刨析源码，等遇到某个属性，某个方法，某个常量时，我们再根据代码逻辑来分析这些个属性、常量、方法的用意。</strong>当然，最后阅读完成之后，会有一个总结，如果大家觉得看得太墨迹，可以直接跳<code>JDK1.8</code>中的<code>HashMap</code><a href="/2018/06/14/HashMap/#sum">总结</a>查看，或者JDK1.8与JDK1.7的<a href="/2018/06/10/HashMap/#sums">异同</a>查看对比。  </p>
 <p>最后，我的<a href="/categories/%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/">源码阅读</a>系列将一直持续下去。更新可能不频繁，但文章内容肯定是深入浅出，争取让所有的同学都看得懂。<br>那么，废话就不说了，大家跟着我一起来阅读源码吧。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2018/06/10/HashMap/#more" rel="contents">
+              <a class="btn" href="/2018/06/14/HashMap/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.hellozuofeng.cn/2018/06/10/runtimemedataarea/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="老板是只叫JOE的猫">
+      <meta itemprop="description" content="不满足是向上的齿轮">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TAKO">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2018/06/10/runtimemedataarea/" class="post-title-link" itemprop="url">从代码角度理解-JVM运行时数据区</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-06-10 10:22:30" itemprop="dateCreated datePublished" datetime="2018-06-10T10:22:30+08:00">2018-06-10</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java%E8%99%9A%E6%8B%9F%E6%9C%BA/" itemprop="url" rel="index"><span itemprop="name">Java虚拟机</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>一问到JVM运行时数据区，相信很多同学第一时间就能想到周志明老师《深入理解Java虚拟机》的内容。但是其中有一部分同学并没有真正的理解，只是单纯的将其“背诵”下来，但等一过了一阵又忘记了。今天我想根据一段代码运行过程带大家来真正理解JVM运行时数据区。还是按我的风格来，我不会上来就向大家介绍这些个数据区，而是让大家跟着代码一起，一步一步引出这些数据区。注意！此片文章并不深入讨论“类的加载”和“对象的创建”，但是可能会需要一点这方面的基础。此片文章推荐通读了周老师《深入理解Java虚拟机》的同学，但是没搞懂或者需要巩固的同学阅读。当然，和往常一样，我们最后还是会有一个<a href="/2018/06/10/runtimemedataarea/#conclusion">总结</a>。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2018/06/10/runtimemedataarea/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -380,7 +384,7 @@
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">2</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
