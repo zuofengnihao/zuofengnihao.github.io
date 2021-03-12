@@ -23,21 +23,21 @@
   <meta name="description" content="引子一问到JVM运行时数据区，相信很多同学第一时间就能想到周志明老师《深入理解Java虚拟机》的内容。但是其中有一部分同学并没有真正的理解，只是单纯的将其“背诵”下来，但等一过了一阵又忘记了。今天我想根据一段代码运行过程带大家来真正理解JVM运行时数据区。还是按我的风格来，我不会上来就向大家介绍这些个数据区，而是让大家跟着代码一起，一步一步引出这些数据区。注意！此片文章并不深入讨论“类的加载”和“">
 <meta property="og:type" content="article">
 <meta property="og:title" content="从代码角度理解-JVM运行时数据区">
-<meta property="og:url" content="https://www.hellozuofeng.cn/2018/06/10/runtimemedataarea/index.html">
+<meta property="og:url" content="https://www.hellozuofeng.cn/2019/06/10/runtimemedataarea/index.html">
 <meta property="og:site_name" content="TAKO">
 <meta property="og:description" content="引子一问到JVM运行时数据区，相信很多同学第一时间就能想到周志明老师《深入理解Java虚拟机》的内容。但是其中有一部分同学并没有真正的理解，只是单纯的将其“背诵”下来，但等一过了一阵又忘记了。今天我想根据一段代码运行过程带大家来真正理解JVM运行时数据区。还是按我的风格来，我不会上来就向大家介绍这些个数据区，而是让大家跟着代码一起，一步一步引出这些数据区。注意！此片文章并不深入讨论“类的加载”和“">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://www.hellozuofeng.cn/2018/06/10/runtimemedataarea/1.png">
-<meta property="og:image" content="https://www.hellozuofeng.cn/2018/06/10/runtimemedataarea/2.png">
-<meta property="og:image" content="https://www.hellozuofeng.cn/2018/06/10/runtimemedataarea/3.png">
-<meta property="article:published_time" content="2018-06-10T02:22:30.000Z">
-<meta property="article:modified_time" content="2021-03-01T10:39:14.337Z">
+<meta property="og:image" content="https://www.hellozuofeng.cn/2019/06/10/runtimemedataarea/1.png">
+<meta property="og:image" content="https://www.hellozuofeng.cn/2019/06/10/runtimemedataarea/2.png">
+<meta property="og:image" content="https://www.hellozuofeng.cn/2019/06/10/runtimemedataarea/3.png">
+<meta property="article:published_time" content="2019-06-10T02:22:30.000Z">
+<meta property="article:modified_time" content="2021-03-10T08:57:03.850Z">
 <meta property="article:author" content="老板是只叫JOE的猫">
 <meta property="article:tag" content="JVM">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://www.hellozuofeng.cn/2018/06/10/runtimemedataarea/1.png">
+<meta name="twitter:image" content="https://www.hellozuofeng.cn/2019/06/10/runtimemedataarea/1.png">
 
-<link rel="canonical" href="https://www.hellozuofeng.cn/2018/06/10/runtimemedataarea/">
+<link rel="canonical" href="https://www.hellozuofeng.cn/2019/06/10/runtimemedataarea/">
 
 
 <script id="page-configurations">
@@ -171,7 +171,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.hellozuofeng.cn/2018/06/10/runtimemedataarea/">
+    <link itemprop="mainEntityOfPage" href="https://www.hellozuofeng.cn/2019/06/10/runtimemedataarea/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -194,7 +194,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2018-06-10 10:22:30" itemprop="dateCreated datePublished" datetime="2018-06-10T10:22:30+08:00">2018-06-10</time>
+              <time title="创建时间：2019-06-10 10:22:30" itemprop="dateCreated datePublished" datetime="2019-06-10T10:22:30+08:00">2019-06-10</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -231,7 +231,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>一问到JVM运行时数据区，相信很多同学第一时间就能想到周志明老师《深入理解Java虚拟机》的内容。但是其中有一部分同学并没有真正的理解，只是单纯的将其“背诵”下来，但等一过了一阵又忘记了。今天我想根据一段代码运行过程带大家来真正理解JVM运行时数据区。还是按我的风格来，我不会上来就向大家介绍这些个数据区，而是让大家跟着代码一起，一步一步引出这些数据区。注意！此片文章并不深入讨论“类的加载”和“对象的创建”，但是可能会需要一点这方面的基础。此片文章推荐通读了周老师《深入理解Java虚拟机》的同学，但是没搞懂或者需要巩固的同学阅读。当然，和往常一样，我们最后还是会有一个<a href="/2018/06/10/runtimemedataarea/#conclusion">总结</a>。</p>
+        <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>一问到JVM运行时数据区，相信很多同学第一时间就能想到周志明老师《深入理解Java虚拟机》的内容。但是其中有一部分同学并没有真正的理解，只是单纯的将其“背诵”下来，但等一过了一阵又忘记了。今天我想根据一段代码运行过程带大家来真正理解JVM运行时数据区。还是按我的风格来，我不会上来就向大家介绍这些个数据区，而是让大家跟着代码一起，一步一步引出这些数据区。注意！此片文章并不深入讨论“类的加载”和“对象的创建”，但是可能会需要一点这方面的基础。此片文章推荐通读了周老师《深入理解Java虚拟机》的同学，但是没搞懂或者需要巩固的同学阅读。当然，和往常一样，我们最后还是会有一个<a href="/2019/06/10/runtimemedataarea/#conclusion">总结</a>。</p>
 <a id="more"></a>
 
 <h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>既然是跟着一段代码来理解并引出JVM各个运行时数据区，那我们先看看代码是如何设计的。  </p>
@@ -250,7 +250,7 @@
 <li>Java堆：我们创建的大部分对象实例会放在这个区域（不考虑栈上分配的情况）。和“方法区”一样，我们的每个运行中的JVM中都只有一快叫“Java堆”的内存区域，所以它也是我们所有线程所共享的。  </li>
 </ul>
 <p>而这个<code>Father</code>类型实例会被创建到我们的“Java堆”中，而常量<code>FATHER</code>会指向我们在“Java堆”中的<code>father</code>实例的内存地址。那么，我们现在来看看<code>main()</code>方法开始运行前，我们的“运行时数据区”是个什么样的结构（下图展示，“蓝色”表示线程共享）。  </p>
-<p><img src="/2018/06/10/runtimemedataarea/1.png" alt="1"></p>
+<p><img src="/2019/06/10/runtimemedataarea/1.png" alt="1"></p>
 <p>当我们的<code>main()</code>方法开始<strong>在线程中运行</strong>时，此刻引出我们第三个内存区域“Java虚拟机栈”。  </p>
 <ul>
 <li>Java虚拟机栈：我们<strong>每个运行的线程</strong>会对应一个“Java虚拟机栈”，所以也有称其为“线程栈”。而每个方法在开始运行前，会创建一个栈帧进入这个<strong>先进后出（FILO）</strong>的栈中。既然是每个线程都会对应一个“Java虚拟机栈”，那么代表这块内存区域是线程私有的区域。  </li>
@@ -260,9 +260,9 @@
 <li>程序计数器：它可以看作当前线程所执行的字节码的行号指示器。因为每个线程都要记录一个字节码的行号，所以和栈一样，也是线程私有的。  </li>
 </ul>
 <p>当代码继续，我们此时创建了一个<code>Demo</code>类型的对象并赋值给了<code>demo</code>变量。因为<code>demo</code>实例中会有一个<code>Son</code>类型的实例<code>demo.son</code>属性，此时<code>Son</code>类型也会加载到我们的内存中。那么，<code>son</code>变量会储存在哪里呢？在我们的栈帧中，除了刚才说到的“动态链接”外，还有一块信息保存着这个方法内声明的本地变量，称其为“局部变量表”。当运行完<code>Demo demo = new Demo()</code>。我们来看看此时的内存区域情况（见下图，“黄色”表示线程独占）。</p>
-<p><img src="/2018/06/10/runtimemedataarea/2.png" alt="2"></p>
+<p><img src="/2019/06/10/runtimemedataarea/2.png" alt="2"></p>
 <p>当代码运行至<code>fatherThread.start()</code>，已经是开启了另外两个线程了。可以看到，我们的重写的<code>run()</code>方法中调用了<code>method1()</code>由调用了<code>method2()</code>，在<code>fatherThread</code>中<code>method2()</code>会调用<code>father.method2()</code>，而在<code>sonThread</code>中<code>method2()</code>则会调用重写了的<code>son.method2()</code>。假设我们现在两个线程一起并行执行，并且都执行到了<code>method2()</code>的第一句代码。此时，我们的<code>method1()</code>方法应该已经出栈了，并且<code>method1()</code>方法也会引出我们“栈帧”的另外一块信息，“方法返回地址”。可以理解为，我们方法退出后返回到哪个方法的哪行代码。而且我们可以看到，<code>method1()</code>与<code>method2()</code>中都是简单的计算，这些计算都是经每个“栈帧”中的“操作数栈”来计算的。此刻我们的内存区域大概会是什么样的呢？此处我们忽略<code>main()</code>方法和<code>Demo</code>类与对象，只拿两个线程做比较（见下图）。</p>
-<p><img src="/2018/06/10/runtimemedataarea/3.png" alt="3">  </p>
+<p><img src="/2019/06/10/runtimemedataarea/3.png" alt="3">  </p>
 <p>至此，除了“本地方法栈”没有聊到，我们几个分区以及内存分区里面中存放的什么都了解了。而“本地方法栈”就是运行除<code>java</code>方法的栈，其他和我们“Java虚拟机栈”没太多区别，我们就一句带过了。现在我们来总结下内存运行时内存区域吧。 </p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><span id="conclusion">总结</span></h2><p>运行时数据区：</p>
 <ul>
@@ -337,7 +337,7 @@
     <div class="post-nav">
       <div class="post-nav-item"></div>
       <div class="post-nav-item">
-    <a href="/2018/06/14/HashMap/" rel="next" title="源码解读——HashMap">
+    <a href="/2019/06/14/HashMap/" rel="next" title="源码解读——HashMap">
       源码解读——HashMap <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
@@ -414,7 +414,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">4</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -427,7 +427,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -477,12 +477,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">40k</span>
+    <span title="站点总字数">43k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">36 分钟</span>
+    <span title="站点阅读时长">39 分钟</span>
 </div>
 <div style="margin:0 auto;">
 	<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=43010502001274" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><img src="/images/beian.png" style="float:left;"/><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">湘公网安备 43010502001274号</p></a>

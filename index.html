@@ -205,14 +205,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>8.1k</span>
+              <span>11k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>7 分钟</span>
+              <span>10 分钟</span>
             </span>
 
         </div>
@@ -251,7 +251,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.hellozuofeng.cn/2018/06/14/HashMap/">
+    <link itemprop="mainEntityOfPage" href="https://www.hellozuofeng.cn/2019/07/03/aqs/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -265,7 +265,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2018/06/14/HashMap/" class="post-title-link" itemprop="url">源码解读——HashMap</a>
+            <a href="/2019/07/03/aqs/" class="post-title-link" itemprop="url">源码解读——从ReentrantLock出发剖析AQS</a>
         </h2>
 
         <div class="post-meta">
@@ -275,7 +275,91 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2018-06-14 21:08:36" itemprop="dateCreated datePublished" datetime="2018-06-14T21:08:36+08:00">2018-06-14</time>
+              <time title="创建时间：2019-07-03 19:33:59" itemprop="dateCreated datePublished" datetime="2019-07-03T19:33:59+08:00">2019-07-03</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">源码阅读</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>511</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>1 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>本来是想解读AQS，但是大家都知道，使用AQS都是内部类继承实现的方式来使用的。如果单拎出来说，会有同学感觉比较突兀。我就以我们平时使用得比较多的重入锁（ReentrantLock）的来做切入点，一道把重入锁和AQS一并说了。正好可以让不了解AQS使用方式的同学一道学习下，在源码中是如何使用AQS的。此篇文章估计不会有总结一说，我会将重要的知识点使用加粗字体来表现。</p>
+<h2 id="new-ReentrantLock"><a href="#new-ReentrantLock" class="headerlink" title="new ReentrantLock()"></a>new ReentrantLock()</h2><p>我们先来看看重入锁的构造方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> Sync sync;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 默认非公平</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ReentrantLock</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    sync = <span class="keyword">new</span> NonfairSync();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 传入boolean值创建公平或非公平锁</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ReentrantLock</span><span class="params">(<span class="keyword">boolean</span> fair)</span> </span>&#123;</span><br><span class="line">    sync = fair ? <span class="keyword">new</span> FairSync() : <span class="keyword">new</span> NonfairSync();</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>从提供的两个构造方法我们看出，此处传入boolean值来构造非公平或公平锁，<strong>默认无参构造的是非公平锁</strong>。而公平与非公平锁初始化的<code>sync</code>值不同。那我们来看看<code>Sync</code>是什么。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.hellozuofeng.cn/2019/06/14/HashMap/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="老板是只叫JOE的猫">
+      <meta itemprop="description" content="不满足是向上的齿轮">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TAKO">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/06/14/HashMap/" class="post-title-link" itemprop="url">源码解读——HashMap</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-06-14 21:08:36" itemprop="dateCreated datePublished" datetime="2019-06-14T21:08:36+08:00">2019-06-14</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -313,11 +397,11 @@
 
       
           <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>我们时常在面试时被问及HashMap相关问题，也时常拿JDK1.8之后的<code>HashMap</code>和<code>JDK1.8</code>之前的<code>HashMap</code>来做比较。今天我将通阅读基于<code>JDK1.8</code>的<code>HashMap</code>与<code>JDK1.7</code>的<code>HashMap</code>的源码来与大家做一个分享。  </p>
-<p>我会以我阅读源码的习惯，从构造函数开始，一步一步的来分析HashMap的属性与方法，或者说内部类。不会和其他文章博客一样，开篇就向大家抛出所有属性、方法或内部类。<strong>这也是我的博客相比其他博客不同之处，以一个正常阅读源码的顺序一步步刨析源码，等遇到某个属性，某个方法，某个常量时，我们再根据代码逻辑来分析这些个属性、常量、方法的用意。</strong>当然，最后阅读完成之后，会有一个总结，如果大家觉得看得太墨迹，可以直接跳<code>JDK1.8</code>中的<code>HashMap</code><a href="/2018/06/14/HashMap/#sum">总结</a>查看，或者JDK1.8与JDK1.7的<a href="/2018/06/10/HashMap/#sums">异同</a>查看对比。  </p>
+<p>我会以我阅读源码的习惯，从构造函数开始，一步一步的来分析HashMap的属性与方法，或者说内部类。不会和其他文章博客一样，开篇就向大家抛出所有属性、方法或内部类。<strong>这也是我的博客相比其他博客不同之处，以一个正常阅读源码的顺序一步步刨析源码，等遇到某个属性，某个方法，某个常量时，我们再根据代码逻辑来分析这些个属性、常量、方法的用意。</strong>当然，最后阅读完成之后，会有一个总结，如果大家觉得看得太墨迹，可以直接跳<code>JDK1.8</code>中的<code>HashMap</code><a href="/2019/06/14/HashMap/#sum">总结</a>查看，或者JDK1.8与JDK1.7的<a href="/2019/06/10/HashMap/#sums">异同</a>查看对比。  </p>
 <p>最后，我的<a href="/categories/%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/">源码阅读</a>系列将一直持续下去。更新可能不频繁，但文章内容肯定是深入浅出，争取让所有的同学都看得懂。<br>那么，废话就不说了，大家跟着我一起来阅读源码吧。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2018/06/14/HashMap/#more" rel="contents">
+              <a class="btn" href="/2019/06/14/HashMap/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -341,7 +425,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.hellozuofeng.cn/2018/06/10/runtimemedataarea/">
+    <link itemprop="mainEntityOfPage" href="https://www.hellozuofeng.cn/2019/06/10/runtimemedataarea/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -355,7 +439,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2018/06/10/runtimemedataarea/" class="post-title-link" itemprop="url">从代码角度理解-JVM运行时数据区</a>
+            <a href="/2019/06/10/runtimemedataarea/" class="post-title-link" itemprop="url">从代码角度理解-JVM运行时数据区</a>
         </h2>
 
         <div class="post-meta">
@@ -365,7 +449,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2018-06-10 10:22:30" itemprop="dateCreated datePublished" datetime="2018-06-10T10:22:30+08:00">2018-06-10</time>
+              <time title="创建时间：2019-06-10 10:22:30" itemprop="dateCreated datePublished" datetime="2019-06-10T10:22:30+08:00">2019-06-10</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -402,10 +486,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>一问到JVM运行时数据区，相信很多同学第一时间就能想到周志明老师《深入理解Java虚拟机》的内容。但是其中有一部分同学并没有真正的理解，只是单纯的将其“背诵”下来，但等一过了一阵又忘记了。今天我想根据一段代码运行过程带大家来真正理解JVM运行时数据区。还是按我的风格来，我不会上来就向大家介绍这些个数据区，而是让大家跟着代码一起，一步一步引出这些数据区。注意！此片文章并不深入讨论“类的加载”和“对象的创建”，但是可能会需要一点这方面的基础。此片文章推荐通读了周老师《深入理解Java虚拟机》的同学，但是没搞懂或者需要巩固的同学阅读。当然，和往常一样，我们最后还是会有一个<a href="/2018/06/10/runtimemedataarea/#conclusion">总结</a>。</p>
+          <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>一问到JVM运行时数据区，相信很多同学第一时间就能想到周志明老师《深入理解Java虚拟机》的内容。但是其中有一部分同学并没有真正的理解，只是单纯的将其“背诵”下来，但等一过了一阵又忘记了。今天我想根据一段代码运行过程带大家来真正理解JVM运行时数据区。还是按我的风格来，我不会上来就向大家介绍这些个数据区，而是让大家跟着代码一起，一步一步引出这些数据区。注意！此片文章并不深入讨论“类的加载”和“对象的创建”，但是可能会需要一点这方面的基础。此片文章推荐通读了周老师《深入理解Java虚拟机》的同学，但是没搞懂或者需要巩固的同学阅读。当然，和往常一样，我们最后还是会有一个<a href="/2019/06/10/runtimemedataarea/#conclusion">总结</a>。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2018/06/10/runtimemedataarea/#more" rel="contents">
+              <a class="btn" href="/2019/06/10/runtimemedataarea/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -493,7 +577,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">4</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -506,7 +590,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -556,12 +640,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">40k</span>
+    <span title="站点总字数">43k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">36 分钟</span>
+    <span title="站点阅读时长">39 分钟</span>
 </div>
 <div style="margin:0 auto;">
 	<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=43010502001274" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><img src="/images/beian.png" style="float:left;"/><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">湘公网安备 43010502001274号</p></a>
